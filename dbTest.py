@@ -32,20 +32,17 @@ class Portfolio:
         # cheap way of getting around sqlite3 unique error (cannot insert if already exists)
         try: 
             self.conn.execute("INSERT INTO PORTFOLIO (ticker, shares) VALUES (?, ?)", (ticker, shares))
+            # updates cash balance accordingly
         except: 
-            self.update(ticker, shares)
+            # checks for allowed values (eg. cannot sell more than you have)
+            if -1*self.getShares(ticker) > shares:
+                print('INSUFFICIENT FUNDS')
+            else:
+                self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getValues()[ticker] + shares, ticker))
+                # updates balance accordingly
         self.conn.commit()
 
         print('commited successfully')
-
-    # changes database values
-    def update(self, ticker, editShares):
-        # checks for allowed values (eg. cannot sell more than you have)
-        if -1*self.getShares(ticker) > editShares:
-            print('INSUFFICIENT FUNDS')
-        else:
-            self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getValues()[ticker] + editShares, ticker))
-            self.conn.commit()
 
     # getters
 
@@ -92,7 +89,7 @@ class Portfolio:
 # test cases
 
 port = Portfolio('portfolio.db', 'cashBalance', 10000)
-port.insert('amzn', 20)
+port.insert('amzn', -10)
 port.toString()
 port.conn.close()
 print('closed successfully')
