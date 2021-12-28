@@ -24,7 +24,7 @@ class Portfolio:
     # misc functions
 
     # lalalalala
-    # aww hell nawwwwwww
+
     # setters
 
     # creates database values
@@ -90,7 +90,9 @@ class Portfolio:
         
 # test cases
 
-port = Portfolio('test2.db', 'cashBalance', 1000)
+port = Portfolio('portfolio', 'cashBalance', 1000)
+
+
 
 port.conn.close()
 print('closed successfully')
