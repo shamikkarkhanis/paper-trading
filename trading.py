@@ -57,13 +57,20 @@ class Portfolio:
     def getCash(self):
         return self.getShares(self.identifier)
     
+    # returns shares value
+    def getSharesValue(self, ticker, shares):
+        return round(si.get_live_price(ticker) * shares, 2)
+    
     # portfolio value
     def getPortValue(self):
-        return 1000.0 # needs to use the value of stocks times amount of owned shares ()
+        pValue = 0.0
+        for column in self.getValuesList()[1::]:
+            pValue += self.getSharesValue(column[0], column[1])
+        return pValue
 
     # combination of cashBalance and investments
     def getNetWorth(self):
-        return self.getCash() + self.getPortValue()
+        return round(self.getCash() + self.getPortValue(), 2)
 
     # returns all values from portfolio database in form of list with items in tuples
     def getValuesList(self):
@@ -87,15 +94,15 @@ class Portfolio:
 
     # returns portfolio formatted as string
     def toString(self):
-        print('')
-        print('--- Portfolio ---')
+        pValue = 0
+        print('\n--- Portfolio ---')
         for column in self.getValuesList()[1::]:
-            print(column[0], ' ', column[1]) # add value of shares for each ticker
-        print('--- \nPortfolio Value: $' + str(self.getPortValue()) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getNetWorth()) + '\n-----------------')
-       
+            stockValue = self.getSharesValue(column[0], column[1])
+            pValue += stockValue
+            print(column[0], str(column[1]), '--> $' + str(stockValue))
+        print('--- \nPortfolio Value: $' + str(pValue) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getCash() + pValue) + '\n-----------------\n')
 
 port = Portfolio('portfolio.db', 'cashBalance', 1000) 
-
 port.toString()
 
 port.conn.close()
