@@ -17,7 +17,7 @@ class Portfolio:
         self.cashBalance = cashBalance
         # cheap way of getting around sqlite3 unique error (cannot insert if already exists)
         try:
-            self.conn.execute("INSERT INTO PORTFOLIO (identifier, cashBalance) VALUES (?, ?)", (identifier, cashBalance))
+            self.conn.execute("INSERT INTO PORTFOLIO VALUES (?, ?)", (identifier, cashBalance))
         except: 
             pass
 
@@ -29,10 +29,11 @@ class Portfolio:
 
     # creates database values
     def insert(self, ticker, shares):
-        if self.getShares(ticker) >= 0:
-            self.update(ticker, shares)
-        else: 
+        # cheap way of getting around sqlite3 unique error (cannot insert if already exists)
+        try: 
             self.conn.execute("INSERT INTO PORTFOLIO (ticker, shares) VALUES (?, ?)", (ticker, shares))
+        except: 
+            self.update(ticker, shares)
         self.conn.commit()
 
         print('commited successfully')
@@ -90,7 +91,8 @@ class Portfolio:
         
 # test cases
 
-port = Portfolio('test2.db', 'cashBalance', 1000)
-
+port = Portfolio('portfolio.db', 'cashBalance', 10000)
+port.insert('amzn', 20)
+port.toString()
 port.conn.close()
 print('closed successfully')
