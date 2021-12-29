@@ -45,17 +45,25 @@ class Portfolio:
             if -1*self.getShares(ticker) > shares:
                 print('INSUFFICIENT FUNDS')
             else:
-                self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getValues()[ticker] + shares, ticker))
-                # updates balance accordingly
+                if 0 > shares:
+                    self.update(ticker, shares)
+                    self.update(self.identifier, self.getSharesValue(ticker, shares))
+                else:
+                    self.update(ticker, shares)
+                    self.update(self.identifier, self.getSharesValue(ticker, -shares))
         self.conn.commit()
 
         print('commited successfully')
+
+    # updates database values
+    def update(self, ticker, shares):
+        self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getShares(ticker) + shares, ticker))
 
     # getters
 
     # returns balance
     def getCash(self):
-        return self.getShares(self.identifier)
+        return round(self.getShares(self.identifier), 2)
     
     # returns shares value
     def getSharesValue(self, ticker, shares):
@@ -100,9 +108,11 @@ class Portfolio:
             stockValue = self.getSharesValue(column[0], column[1])
             pValue += stockValue
             print(column[0], str(column[1]), '--> $' + str(stockValue))
-        print('--- \nPortfolio Value: $' + str(pValue) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getCash() + pValue) + '\n-----------------\n')
+        print('--- \nPortfolio Value: $' + str(pValue) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(round(self.getCash() + pValue, 2)) + '\n-----------------\n')
 
 port = Portfolio('portfolio.db', 'cashBalance', 1000) 
+
+port.insert('aapl', 3)
 port.toString()
 
 port.conn.close()
