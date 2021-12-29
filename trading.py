@@ -42,16 +42,17 @@ class Portfolio:
             # updates cash balance accordingly
         except: 
             # checks for allowed values (eg. cannot sell more than you have)
+
             if -1*self.getShares(ticker) > shares:
                 print('INSUFFICIENT FUNDS')
-            else:
-                if 0 > shares:
-                    self.update(ticker, shares)
-                    self.update(self.identifier, self.getSharesValue(ticker, shares))
-                else:
-                    self.update(ticker, shares)
-                    self.update(self.identifier, self.getSharesValue(ticker, -shares))
-        self.conn.commit()
+            elif 0 > shares:
+                self.update(ticker, shares)
+                self.update(self.identifier, self.getSharesValue(ticker, shares))
+            else: 
+                self.update(ticker, shares)
+                self.update(self.identifier, self.getSharesValue(ticker, -shares))
+
+            self.conn.commit()
 
         print('commited successfully')
 
@@ -112,7 +113,7 @@ class Portfolio:
 
 port = Portfolio('portfolio.db', 'cashBalance', 1000) 
 
-port.insert('aapl', 3)
+port.insert('aapl', 8)
 port.toString()
 
 port.conn.close()
