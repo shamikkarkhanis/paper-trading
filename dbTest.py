@@ -26,7 +26,7 @@ class Portfolio:
     # lalalalala
     # aww hell nawwwwwww
     # setters
-
+    # just testing vim :]
     # creates database values
     def insert(self, ticker, shares):
         # cheap way of getting around sqlite3 unique error (cannot insert if already exists)
