@@ -87,9 +87,9 @@ class Portfolio:
         print('--- \nPortfolio Value: $' + str(self.getPortValue()) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getNetWorth()) + '\n-----------------')
         
 # test cases
-
 port = Portfolio('portfolio.db', 'cashBalance', 10000)
-port.insert('amzn', -10)
 port.toString()
+
+# closing database
 port.conn.close()
 print('closed successfully')

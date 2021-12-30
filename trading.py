@@ -28,10 +28,6 @@ class Portfolio:
         except: 
             pass
 
-    # misc functions
-
-    # lalalalala
-    # aww hell nawwwwwww
     # setters
 
     # creates database values
@@ -39,36 +35,49 @@ class Portfolio:
         # cheap way of getting around sqlite3 unique error (cannot insert if already exists)
         try: 
             self.conn.execute("INSERT INTO PORTFOLIO (ticker, shares) VALUES (?, ?)", (ticker, shares))
-            # updates cash balance accordingly
+            self.updateBalance(self.identifier, -self.getSharesValue(ticker, shares))
         except: 
-            # checks for allowed values (eg. cannot sell more than you have)
-
-            if -1*self.getShares(ticker) > shares:
-                print('INSUFFICIENT FUNDS')
-            elif 0 > shares:
-                self.update(ticker, shares)
-                self.update(self.identifier, self.getSharesValue(ticker, shares))
-            else: 
-                self.update(ticker, shares)
-                self.update(self.identifier, self.getSharesValue(ticker, -shares))
-
-            self.conn.commit()
+            
+            self.validateAndProceeed(ticker, shares)
 
         print('commited successfully')
+    
+    # in testing
+    def validateAndProceeed(self, ticker, shares): 
+        if shares >= 0: # buy condition
+            if self.getShares(self.identifier) >= self.getSharesValue(ticker, shares):
+                self.update(ticker, shares)
+                self.updateBalance(-self.getSharesValue(ticker, shares))
+            else:
+                print('INSUFFICIENT FUNDS')
+        else: # sell condition (shares < 0)
+            if abs(shares) <= self.getShares(ticker):
+                self.update(ticker, shares) 
+                self.updateBalance(self.getSharesValue(ticker, shares))
+            else: 
+                print('INSUFFICIENT SHARES')
+        self.conn.commit()
+                
 
-    # updates database values
+    def resetCash(self, newBalance):
+        self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (newBalance, self.identifier))
+
+    # in testing
     def update(self, ticker, shares):
         self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getShares(ticker) + shares, ticker))
-
+   
     # getters
 
     # returns balance
     def getCash(self):
         return round(self.getShares(self.identifier), 2)
     
+    def updateBalance(self, amount):
+        self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (amount + self.getShares(self.identifier), self.identifier))
+    
     # returns shares value
     def getSharesValue(self, ticker, shares):
-        return round(si.get_live_price(ticker) * shares, 2)
+        return round(si.get_live_price(ticker) * abs(shares), 2)
     
     # portfolio value
     def getPortValue(self):
@@ -113,7 +122,7 @@ class Portfolio:
 
 port = Portfolio('portfolio.db', 'cashBalance', 1000) 
 
-port.insert('aapl', 8)
+port.insert('aapl', -1)
 port.toString()
 
 port.conn.close()
