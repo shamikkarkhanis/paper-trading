@@ -82,17 +82,17 @@ class Portfolio:
 
     # returns balance
     def getCash(self):
-        return round(self.getShares(self.identifier), 2)
+        return self.getShares(self.identifier)
     
     def updateBalance(self, amount):
         self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (amount + self.getShares(self.identifier), self.identifier))
     
     # returns shares value
     def getSharesToPrice(self, ticker, shares):
-        return round(si.get_live_price(ticker) * abs(shares), 2)
+        return si.get_live_price(ticker) * abs(shares)
     
     def getPriceToShares(self, ticker, price):
-        return round(price/si.get_live_price(ticker), 2)
+        return price/si.get_live_price(ticker)
     
     # portfolio value
     def getPortValue(self):
@@ -103,7 +103,7 @@ class Portfolio:
 
     # combination of cashBalance and investments
     def getNetWorth(self):
-        return round(self.getCash() + self.getPortValue(), 2)
+        return self.getCash() + self.getPortValue()
 
     # returns all values from portfolio database in form of list with items in tuples
     def getValuesList(self):
@@ -133,7 +133,7 @@ class Portfolio:
             stockValue = self.getSharesToPrice(column[0], column[1])
             pValue += stockValue
             print(column[0], str(column[1]), '--> $' + str(stockValue))
-        print('--- \nPortfolio Value: $' + str(round(pValue, 2)) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(round(self.getCash() + pValue, 2)) + '\n-----------------\n')
+        print('--- \nPortfolio Value: $' + str(pValue) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getCash() + pValue) + '\n-----------------\n')
 
 # playing functions
 
