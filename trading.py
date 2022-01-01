@@ -49,7 +49,7 @@ class Portfolio:
                 self.delete(ticker)
             else: pass
 
-    # in testing
+    # goes trough conditions and updates values in database accordingly
     def validateAndProceeed(self, ticker, shares): 
         if shares >= 0: # buy condition
             if self.getShares(self.identifier) >= self.getSharesToPrice(ticker, shares):
@@ -74,7 +74,7 @@ class Portfolio:
     def resetCash(self, newBalance):
         self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (newBalance, self.identifier))
 
-    # in testing
+    # updates already existing values in database
     def update(self, ticker, shares):
         self.conn.execute("UPDATE portfolio set shares = ? where ticker = ?", (self.getShares(ticker) + shares, ticker))
    
@@ -150,6 +150,8 @@ def startup():
             amount = input('shares or captial (eg. 10 or $1000): ').lower()
             if amount[0] == '$':
                 port.insert(stock, port.getPriceToShares(stock, float(amount[1::])))
+            elif amount == 'rest':
+                port.insert(stock, port.getPriceToShares(stock, port.getCash()))
             else:
                 port.insert(stock, float(amount))
         elif userInput == 's': # to sell stock
@@ -157,14 +159,24 @@ def startup():
             amount = input('shares or capital (eg. 10 or $1000): ').lower()
             if amount[0] == '$': # differentiating between number of shares to sell and amount of money in holding
                 port.insert(stock, -port.getPriceToShares(stock, float(amount[1::])))
+            elif amount == 'all':
+                port.insert(stock, -port.getShares(stock))
             else:
                 port.insert(stock, -float(amount))
-        elif userInput == 's all':
-            for stock in port.getValues():
-                port.updateBalance(port.getValues()[stock])
-                port.delete(stock)
+        elif userInput == 's all': # sells all stocks
+            x = 1
+            for stock in port.getValuesList()[1::]:
+                ticker = port.getValuesList()[x][0]
+                shares = -port.getValuesList()[x][1]
+                port.insert(ticker, shares)
+        elif userInput == 'bal': # get balance
+            print('--> Cash Balance: $' + str(port.getCash()))
+        elif userInput == 'nw' or userInput == 'net worth':
+            print('--> Net Worth: $' + str(port.getNetWorth()))
         elif userInput == 'e':
-            break    
+            break
+            
+
     port.conn.close()
 
 
@@ -172,9 +184,6 @@ def startup():
 port = Portfolio('portfolio.db', 'cashBalance', 500) 
 
 startup()
-
-
-
 
 
 
