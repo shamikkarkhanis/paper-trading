@@ -25,8 +25,6 @@ class Portfolio:
             self.conn.execute("INSERT INTO PORTFOLIO VALUES (?, ?)", (identifier, cashBalance))
         except: 
             pass
-    
-        self.cleanup()
 
     # setters
 
@@ -40,14 +38,17 @@ class Portfolio:
         except: 
             self.validateAndProceeed(ticker, shares)
 
-        self.cleanup()
+        
         
     # checks if any stocks have 0 shares and removes them 
     def cleanup(self):
-        for ticker in self.getValues():
-            if self.getValues()[ticker] == 0:
-                self.delete(ticker)
+        for ticker in self.getValuesList()[1::]:
+            if self.getValues()[ticker[0]] == 0:
+                self.delete(ticker[0])
             else: pass
+    
+    def deletePortfolio(self):
+        pass
 
     # goes trough conditions and updates values in database accordingly
     def validateAndProceeed(self, ticker, shares): 
@@ -55,14 +56,14 @@ class Portfolio:
             if self.getShares(self.identifier) >= self.getSharesToPrice(ticker, shares):
                 self.update(ticker, shares)
                 self.updateBalance(-self.getSharesToPrice(ticker, shares))
-                print('--> Bought ' + str(shares) + ' share of ' + ticker + ' at ' + '$' + str(self.getSharesToPrice(ticker, shares)))
+                print('--> Bought ' + str(round(shares, 2)) + ' share of ' + ticker + ' at ' + '$' + str(round(self.getSharesToPrice(ticker, shares), 2)))
             else:
                 print('INSUFFICIENT FUNDS')
         else: # sell condition (shares < 0)
             if abs(shares) <= self.getShares(ticker):
                 self.update(ticker, shares) 
                 self.updateBalance(self.getSharesToPrice(ticker, shares))
-                print('--> Sold ' + str(abs(shares)) + ' share of ' + ticker + ' at ' + '$' + str(self.getSharesToPrice(ticker, shares)))
+                print('--> Sold ' + str(abs(round(shares, 2))) + ' share of ' + ticker + ' at ' + '$' + str(round(self.getSharesToPrice(ticker, shares), 2)))
             else: 
                 print('INSUFFICIENT SHARES')
         self.conn.commit()
@@ -127,15 +128,55 @@ class Portfolio:
 
     # returns portfolio formatted as string
     def toString(self):
+        port.cleanup()
         pValue = 0
         print('\n--- Portfolio ---')
         for column in self.getValuesList()[1::]:
             stockValue = self.getSharesToPrice(column[0], column[1])
             pValue += stockValue
-            print(column[0], str(column[1]), '--> $' + str(stockValue))
-        print('--- \nPortfolio Value: $' + str(pValue) + '\n---\nCash Balance: $' + str(self.getCash()) + '\n---\nNet Worth: $' + str(self.getCash() + pValue) + '\n-----------------\n')
+            print(column[0], str(round(column[1], 2)), '--> $' + str(round(stockValue, 2)))
+        print('--- \nPortfolio Value: $' + str(round(pValue, 2)) + '\n---\nCash Balance: $' + str(round(self.getCash(), 2)) + '\n---\nNet Worth: $' + str(round(self.getCash() + pValue, 2)) + '\n-----------------\n')
 
 # playing functions
+
+def help():
+    print("\nAvailable options: \n  'p' - view portfolip \n  'bal' - view cash balance \n  'nw' or 'net worth - view net worth")
+    print("  'b' - buy \n  's' - sell\n")
+    print("Buying: \n  hit 'b' then the stock you wish to purchase \n  and then the amount of shares or money you wish to invest")
+    print("  putting a '$' in front of the amount you wish to invest means dollars and without means shares")
+    print("  alternatively putting 'rest' as the amount will lead to spending the rest of your cash balance\n")
+    print("Selling: ")
+    print("  click 's' and then the stock you would like to sell follwed by the amount")
+    print("  just like buying, putting a dollar sign means you will gain that amount of money with the sale")
+    print("  and without means shares")
+    print("  putting 'all' as the amount will sell all owned shares of that one stock\n")
+
+def buy():
+    stock = input('BUYING\nticker: ').lower()
+    amount = input('shares or captial (eg. 10 or $1000): ').lower()
+    if amount[0] == '$':
+        port.insert(stock, port.getPriceToShares(stock, float(amount[1::])))
+    elif amount == 'rest':
+        port.insert(stock, port.getPriceToShares(stock, port.getCash()))
+    else:
+        port.insert(stock, float(amount))
+
+def sell():
+    stock = input('SELLING\nticker: ').lower()
+    amount = input('shares or capital (eg. 10 or $1000): ').lower()
+    if amount[0] == '$': # differentiating between number of shares to sell and amount of money in holding
+        port.insert(stock, -port.getPriceToShares(stock, float(amount[1::])))
+    elif amount == 'all':
+        port.insert(stock, -port.getShares(stock))
+    else:
+        port.insert(stock, -float(amount))
+
+def sellAll():
+    x = 1
+    for stock in port.getValuesList()[1::]:
+        ticker = port.getValuesList()[x][0]
+        shares = -port.getValuesList()[x][1]
+        port.insert(ticker, shares)
 
 def startup():
     print('\n~~~~~~Happy Trading~~~~~~\n')
@@ -146,44 +187,31 @@ def startup():
         elif userInput == 'p': # to check portfolio
             port.toString()
         elif userInput == 'b': # to buy stock
-            stock = input('BUYING\nticker: ').lower()
-            amount = input('shares or captial (eg. 10 or $1000): ').lower()
-            if amount[0] == '$':
-                port.insert(stock, port.getPriceToShares(stock, float(amount[1::])))
-            elif amount == 'rest':
-                port.insert(stock, port.getPriceToShares(stock, port.getCash()))
-            else:
-                port.insert(stock, float(amount))
+            buy()
         elif userInput == 's': # to sell stock
-            stock = input('SELLING\nticker: ').lower()
-            amount = input('shares or capital (eg. 10 or $1000): ').lower()
-            if amount[0] == '$': # differentiating between number of shares to sell and amount of money in holding
-                port.insert(stock, -port.getPriceToShares(stock, float(amount[1::])))
-            elif amount == 'all':
-                port.insert(stock, -port.getShares(stock))
-            else:
-                port.insert(stock, -float(amount))
+            sell()
         elif userInput == 's all': # sells all stocks
-            x = 1
-            for stock in port.getValuesList()[1::]:
-                ticker = port.getValuesList()[x][0]
-                shares = -port.getValuesList()[x][1]
-                port.insert(ticker, shares)
+            sellAll()
         elif userInput == 'bal': # get balance
-            print('--> Cash Balance: $' + str(port.getCash()))
+            print('--> Cash Balance: $' + str(round(port.getCash(), 2)))
         elif userInput == 'nw' or userInput == 'net worth':
-            print('--> Net Worth: $' + str(port.getNetWorth()))
+            print('--> Net Worth: $' + str(round(port.getNetWorth(), 2)))
         elif userInput == 'e':
             break
-            
-
+        
     port.conn.close()
+
+    
 
 
 # creates a portfolio object 
 port = Portfolio('portfolio.db', 'cashBalance', 500) 
 
 startup()
+
+
+
+
 
 
 
