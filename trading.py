@@ -2,7 +2,6 @@
 # created: 11-22-21
 # last edit: 11-22-21
 # version: 1.0
-# test test
 
 # imports
 from yahoo_fin import stock_info as si
